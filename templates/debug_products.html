@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Debug Products</h1>
+    {% for product in products %}
+    <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ddd;">
+        <h3>{{ product.name }}</h3>
+        <p>Image filename: {{ product.image }}</p>
+        <p>Full image path: {{ url_for('static', filename='images/products/' + product.image) }}</p>
+        <p>Category: {{ product.category_name }}</p>
+        <img src="{{ url_for('static', filename='images/products/' + product.image) }}" 
+             alt="{{ product.name }}" 
+             style="max-width: 200px;">
+    </div>
+    {% endfor %}
+</div>
+{% endblock %} 
