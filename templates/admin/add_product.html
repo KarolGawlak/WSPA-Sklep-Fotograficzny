@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Dodaj/Edytuj Produkt</h1>
+    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" enctype="multipart/form-data" class="product-form">
+        <div class="mb-3">
+            <label for="name" class="form-label">Nazwa produktu</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="price" class="form-label">Cena (zł)</label>
+            <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="description" class="form-label">Opis</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+        </div>
+        
+        <div class="mb-3">
+            <label for="category" class="form-label">Kategoria</label>
+            <select class="form-control" id="category" name="category" required>
+                {% for category in categories %}
+                <option value="{{ category.slug }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="mb-3">
+            <label for="image" class="form-label">Zdjęcie produktu</label>
+            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+            <small class="form-text text-muted">Maksymalny rozmiar: 5MB. Dozwolone formaty: JPG, PNG</small>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Dodaj produkt</button>
+    </form>
+</div>
+{% endblock %} 

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="welcome-section">
+        <h1>Witamy w PixelFrame</h1>
+        <p>Znajdź profesjonalny sprzęt dla siebie</p>
+    </div>
+    
+    <div class="featured-products">
+        <h2>Polecane produkty</h2>
+        <div class="products-grid">
+            {% for product in featured_products %}
+            <div class="product-card">
+                <img src="{{ url_for('static', filename='images/products/' + product.image) }}" 
+                     alt="{{ product.name }}" 
+                     class="product-image">
+                <div class="product-info">
+                    <span class="category-badge">{{ product.category_name }}</span>
+                    <h3>{{ product.name }}</h3>
+                    <p class="product-description">{{ product.description }}</p>
+                    <p class="product-price">{{ "%.2f"|format(product.price) }} zł</p>
+                    <form action="{{ url_for('add_to_cart') }}" method="POST">
+                        <input type="hidden" name="product_name" value="{{ product.name }}">
+                        <button type="submit" class="btn btn-primary">Dodaj do koszyka</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

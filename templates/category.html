@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="category-title">{{ category|title }}</h1>
+    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <img src="{{ url_for('static', filename='images/products/' + product.image) }}" 
+                 alt="{{ product.name }}" 
+                 class="product-image">
+            <div class="product-info">
+                <h3>{{ product.name }}</h3>
+                <p class="product-description">{{ product.description }}</p>
+                <p class="product-price">{{ "%.2f"|format(product.price) }} zł</p>
+                <form action="{{ url_for('add_to_cart') }}" method="POST">
+                    <input type="hidden" name="category" value="{{ category }}">
+                    <input type="hidden" name="product_name" value="{{ product.name }}">
+                    <button type="submit" class="btn btn-primary">Dodaj do koszyka</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 
