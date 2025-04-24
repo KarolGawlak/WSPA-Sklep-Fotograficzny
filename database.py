@@ -25,7 +25,7 @@ def init_db():
         db.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
+            name TEXT NOT NULL UNIQUE,
             price DECIMAL(10,2) NOT NULL,
             description TEXT,
             image TEXT,
