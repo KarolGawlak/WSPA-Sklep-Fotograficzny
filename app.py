@@ -1,10 +1,12 @@
-from flask import Flask, render_template, session, redirect, url_for, flash, request
+from flask import Flask, render_template, session, redirect, url_for, flash, request, abort
 from decimal import Decimal
 import database
 import os
 from werkzeug.utils import secure_filename
 from PIL import Image
 import time
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -17,6 +19,32 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def datetimeformat(value, format='%Y-%m-%d %H:%M:%S'):
+    """Format a datetime object or timestamp string"""
+    if value is None:
+        return ''
+    if isinstance(value, str):
+        try:
+            # Try to parse the string as a datetime
+            if 'T' in value:  # ISO format
+                value = datetime.fromisoformat(value.replace('Z', '+00:00'))
+            else:  # SQLite format
+                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+        except (ValueError, TypeError):
+            return value
+    return value.strftime(format)
+
+# Register the datetimeformat filter with Jinja2
+app.jinja_env.filters['datetimeformat'] = datetimeformat
+
+@app.context_processor
+def inject_template_vars():
+    """Inject common variables into all templates"""
+    return {
+        'get_categories_for_nav': lambda: database.get_categories(),
+        'now': datetime.now()
+    }
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -155,6 +183,132 @@ def add_product():
 def debug_products():
     products = database.get_all_products()
     return render_template('debug_products.html', products=products)
+
+# User Authentication Routes
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        password_confirm = request.form.get('password_confirm')
+
+        if not all([full_name, email, password, password_confirm]):
+            flash('Wszystkie pola są wymagane!', 'danger')
+            return redirect(url_for('register'))
+
+        if password != password_confirm:
+            flash('Hasła nie są identyczne!', 'danger')
+            return redirect(url_for('register'))
+
+        hashed_password = generate_password_hash(password)
+        
+        if database.create_user(email, hashed_password, full_name, ""):
+            flash('Rejestracja pomyślna! Możesz się teraz zalogować.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Użytkownik o tym adresie email już istnieje!', 'danger')
+            return redirect(url_for('register'))
+
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            flash('Email i hasło są wymagane!', 'danger')
+            return redirect(url_for('login'))
+
+        user = database.get_user_by_email(email)
+
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['id']
+            session['user_email'] = user['email']
+            session['is_admin'] = user['is_admin']
+            flash('Zalogowano pomyślnie!', 'success')
+            return redirect(url_for('home')) # Or redirect to a profile page
+        else:
+            flash('Nieprawidłowy email lub hasło.', 'danger')
+            return redirect(url_for('login'))
+
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    session.pop('user_email', None)
+    session.pop('is_admin', None)
+    flash('Wylogowano pomyślnie.', 'info')
+    return redirect(url_for('home'))
+
+@app.route('/product/<path:product_identifier>')
+def product_detail(product_identifier):
+    """Display product details and reviews"""
+    print(f"Looking for product with identifier: {product_identifier}")
+    product = database.get_product_by_id_or_slug(product_identifier)
+    print(f"Found product: {product}")
+    
+    if not product:
+        print(f"Product not found for identifier: {product_identifier}")
+        abort(404)
+    
+    # Get product reviews
+    reviews = database.get_product_reviews(product['id'])
+    print(f"Found {len(reviews)} reviews for product {product['id']}")
+    
+    # Calculate average rating
+    avg_rating = 0
+    if reviews:
+        avg_rating = sum(review['rating'] for review in reviews) / len(reviews)
+    
+    # Debug output
+    print(f"Rendering template with product: {product['name']}, price: {product['price']}, image: {product['image']}")
+    
+    return render_template('product_detail.html', 
+                         product=product, 
+                         reviews=reviews,
+                         avg_rating=round(avg_rating, 1) if reviews else 0,
+                         review_count=len(reviews))
+
+@app.route('/product/<int:product_id>/review', methods=['POST'])
+def submit_review(product_id):
+    """Handle review submission"""
+    if 'user_id' not in session:
+        flash('Musisz być zalogowany, aby dodać opinię.', 'danger')
+        return redirect(url_for('login', next=request.url))
+    
+    rating = request.form.get('rating')
+    comment = request.form.get('comment', '').strip()
+    
+    # Validate input
+    if not rating or not rating.isdigit() or int(rating) < 1 or int(rating) > 5:
+        flash('Proszę podać ocenę od 1 do 5 gwiazdek.', 'danger')
+        return redirect(url_for('product_detail', product_identifier=product_id))
+    
+    if not comment or len(comment) < 10:
+        flash('Komentarz musi zawierać co najmniej 10 znaków.', 'danger')
+        return redirect(url_for('product_detail', product_identifier=product_id))
+    
+    # Add the review
+    if database.add_product_review(
+        product_id=product_id,
+        user_id=session['user_id'],
+        rating=int(rating),
+        comment=comment
+    ):
+        flash('Dziękujemy za dodanie opinii!', 'success')
+    else:
+        flash('Wystąpił błąd podczas dodawania opinii. Spróbuj ponownie później.', 'danger')
+    
+    return redirect(url_for('product_detail', product_identifier=product_id))
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 if __name__ == '__main__':
     app.run(debug=True) 
