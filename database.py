@@ -246,6 +246,19 @@ def add_product_review(product_id, user_id, rating, comment):
             print(f"Error adding review: {e}")
             return False
 
+def search_products(search_query):
+    """Search for products by name or description"""
+    search_term = f"%{search_query}%"
+    with get_db() as db:
+        cursor = db.execute("""
+            SELECT p.*, c.name as category_name, c.slug as category_slug 
+            FROM products p
+            JOIN categories c ON p.category_id = c.id
+            WHERE p.name LIKE ? OR p.description LIKE ?
+            ORDER BY p.name
+        """, (search_term, search_term))
+        return [dict(row) for row in cursor.fetchall()]
+
 # User related functions
 def create_user(email, password_hash, full_name, address):
     with get_db() as db:

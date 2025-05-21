@@ -245,6 +245,19 @@ def logout():
     flash('Wylogowano pomyślnie.', 'info')
     return redirect(url_for('home'))
 
+@app.route('/search')
+def search():
+    """Handle product search"""
+    query = request.args.get('q', '').strip()
+    if not query:
+        return redirect(url_for('home'))
+    
+    products = database.search_products(query)
+    return render_template('search_results.html', 
+                         products=products, 
+                         search_query=query,
+                         result_count=len(products))
+
 @app.route('/product/<path:product_identifier>')
 def product_detail(product_identifier):
     """Display product details and reviews"""

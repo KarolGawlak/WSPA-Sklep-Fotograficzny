@@ -11,6 +11,7 @@
 </head>
 <body>
     <header>
+        <!-- Main Navigation -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
                 <a class="navbar-brand" href="{{ url_for('home') }}">WSPA Photo Store</a>
@@ -73,7 +74,31 @@
                 </div>
             </div>
         </nav>
+        
+        <!-- Search Bar -->
+        <div class="bg-light py-2 shadow-sm">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-12 col-md-8 col-lg-6">
+                        <form action="{{ url_for('search') }}" method="get" class="mb-0">
+                            <div class="input-group">
+                                <input class="form-control form-control-lg border-primary" 
+                                       type="search" 
+                                       name="q" 
+                                       placeholder="Wpisz nazwę lub opis produktu..." 
+                                       aria-label="Szukaj produktów" 
+                                       required>
+                                <button class="btn btn-primary px-4" type="submit">
+                                    <i class="fas fa-search me-1"></i> Szukaj
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </header>
+</header>
 
     <main class="py-4">
         <div class="container">
