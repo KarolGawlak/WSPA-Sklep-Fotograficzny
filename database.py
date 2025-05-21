@@ -137,15 +137,95 @@ def init_db():
         
         db.commit()
 
-def get_products_by_category(category_slug):
+def get_products_by_category(category_slug, brands=None, price_min=None, price_max=None, sort=None):
+    """
+    Get products by category, with optional filtering (brands, price range) and sorting.
+    brands: list of brand names (or None)
+    price_min: minimum price (or None)
+    price_max: maximum price (or None)
+    sort: 'price_asc', 'price_desc', 'name_asc', 'name_desc', 'newest' (default: newest)
+    """
+    query = '''
+        SELECT products.*, categories.name as category_name, categories.slug as category_slug
+        FROM products
+        JOIN categories ON products.category_id = categories.id
+        WHERE categories.slug = ?
+    '''
+    params = [category_slug]
+    
+    # Filter by brands
+    if brands:
+        query += f" AND products.brand IN ({','.join(['?']*len(brands))})"
+        params.extend(brands)
+    # Filter by price
+    if price_min:
+        query += " AND products.price >= ?"
+        params.append(price_min)
+    if price_max:
+        query += " AND products.price <= ?"
+        params.append(price_max)
+    # Sorting
+    if sort == 'price_asc':
+        query += " ORDER BY products.price ASC"
+    elif sort == 'price_desc':
+        query += " ORDER BY products.price DESC"
+    elif sort == 'name_asc':
+        query += " ORDER BY products.name COLLATE NOCASE ASC"
+    elif sort == 'name_desc':
+        query += " ORDER BY products.name COLLATE NOCASE DESC"
+    else:  # newest
+        query += " ORDER BY products.date_added DESC"
     with get_db() as db:
-        products = db.execute('''
-            SELECT products.* 
-            FROM products 
-            JOIN categories ON products.category_id = categories.id
-            WHERE categories.slug = ?
-        ''', (category_slug,)).fetchall()
+        products = db.execute(query, params).fetchall()
         return [dict(product) for product in products]
+
+
+def get_brands_for_category(category_slug):
+    """Get all unique brands for a given category_slug."""
+    with get_db() as db:
+        rows = db.execute('''
+            SELECT DISTINCT brand FROM products
+            JOIN categories ON products.category_id = categories.id
+            WHERE categories.slug = ? AND brand IS NOT NULL AND brand != ''
+            ORDER BY brand
+        ''', (category_slug,)).fetchall()
+        return [row['brand'] for row in rows]
+
+
+def get_user_by_id(user_id):
+    with get_db() as db:
+        user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        return dict(user) if user else None
+
+
+def create_order(user_id, full_name, address, cart, total):
+    """
+    Creates an order and order_items, updates stock. Returns order_id.
+    cart: dict of product_name -> {name, price, image, category, quantity}
+    """
+    with get_db() as db:
+        # Insert order
+        cursor = db.execute('''
+            INSERT INTO orders (user_id, total_amount, status, shipping_address)
+            VALUES (?, ?, ?, ?)
+        ''', (user_id, total, 'nowe', f"{full_name}\n{address}"))
+        order_id = cursor.lastrowid
+        # For each cart item, insert into order_items and update stock
+        for item in cart.values():
+            # Get product_id
+            product = db.execute('SELECT id, stock_quantity FROM products WHERE name = ?', (item['name'],)).fetchone()
+            if not product:
+                raise Exception(f"Produkt nie istnieje: {item['name']}")
+            if product['stock_quantity'] < item['quantity']:
+                raise Exception(f"Brak wystarczającej ilości produktu: {item['name']}")
+            db.execute('''
+                INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+                VALUES (?, ?, ?, ?)
+            ''', (order_id, product['id'], item['quantity'], item['price']))
+            # Update stock
+            db.execute('UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?', (item['quantity'], product['id']))
+        db.commit()
+        return order_id
 
 def get_product_by_name(product_name):
     with get_db() as db:

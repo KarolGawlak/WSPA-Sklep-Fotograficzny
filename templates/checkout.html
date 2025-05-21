@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Zamówienie - WSPA Photo Store{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Podsumowanie zamówienia</h1>
+    {% if cart and cart|length > 0 %}
+    <form method="post" action="{{ url_for('checkout') }}">
+        <div class="row">
+            <div class="col-md-7">
+                <h4 class="mb-3">Adres dostawy</h4>
+                <div class="mb-3">
+                    <label for="full_name" class="form-label">Imię i nazwisko</label>
+                    <input type="text" class="form-control" id="full_name" name="full_name" required value="{{ user.full_name if user else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="address" class="form-label">Adres</label>
+                    <textarea class="form-control" id="address" name="address" rows="2" required>{{ user.address if user else '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="blik_code" class="form-label">Kod BLIK</label>
+                    <input type="text" class="form-control" id="blik_code" name="blik_code" pattern="\d{6}" maxlength="6" minlength="6" required placeholder="Wprowadź 6-cyfrowy kod BLIK">
+                </div>
+                <!-- Optionally add more fields: phone, city, zip, etc. -->
+            </div>
+            <div class="col-md-5">
+                <h4 class="mb-3">Twój koszyk</h4>
+                <ul class="list-group mb-3">
+                    {% for name, item in cart.items() %}
+                    <li class="list-group-item d-flex justify-content-between lh-sm">
+                        <div>
+                            <h6 class="my-0">{{ item.name }}</h6>
+                            <small class="text-muted">x{{ item.quantity }}</small>
+                        </div>
+                        <span class="text-muted">{{ "%.2f"|format(item.price * item.quantity) }} zł</span>
+                    </li>
+                    {% endfor %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span><strong>Razem</strong></span>
+                        <strong>{{ "%.2f"|format(total) }} zł</strong>
+                    </li>
+                </ul>
+                <button type="submit" class="btn btn-primary w-100 mt-3">Złóż zamówienie</button>
+            </div>
+        </div>
+    </form>
+    {% else %}
+        <div class="alert alert-info">Twój koszyk jest pusty.</div>
+    {% endif %}
+</div>
+{% endblock %}

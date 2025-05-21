@@ -81,12 +81,74 @@ def home():
 
 @app.route('/<category>')
 def category_page(category):
-    products = database.get_products_by_category(category)
-    if products:
+    # Get filter/sort params from query string
+    sort = request.args.get('sort', 'newest')
+    brands = request.args.getlist('brand')
+    price_min = request.args.get('price_min')
+    price_max = request.args.get('price_max')
+    # Convert price_min/max to float if present
+    price_min = float(price_min) if price_min else None
+    price_max = float(price_max) if price_max else None
+    # Fetch all brands for this category for the filter UI
+    all_brands = database.get_brands_for_category(category)
+    # Fetch filtered/sorted products
+    products = database.get_products_by_category(
+        category_slug=category,
+        brands=brands if brands else None,
+        price_min=price_min,
+        price_max=price_max,
+        sort=sort
+    )
+    if products is not None:
         return render_template('category.html', 
                              category=category, 
-                             products=products)
+                             products=products,
+                             brands=all_brands)
     return "Category not found", 404
+
+@app.route('/checkout', methods=['GET', 'POST'])
+def checkout():
+    # Require login
+    if 'user_id' not in session:
+        flash('Musisz być zalogowany, aby złożyć zamówienie.', 'danger')
+        return redirect(url_for('login', next=url_for('checkout')))
+    # Require cart
+    cart = session.get('cart', {})
+    total = sum(item['price'] * item['quantity'] for item in cart.values())
+    user = database.get_user_by_id(session['user_id'])
+    if request.method == 'POST':
+        full_name = request.form.get('full_name', '').strip()
+        address = request.form.get('address', '').strip()
+        blik_code = request.form.get('blik_code', '').strip()
+        if not full_name or not address:
+            flash('Imię i nazwisko oraz adres są wymagane.', 'danger')
+            return render_template('checkout.html', cart=cart, total=total, user=user)
+        if not blik_code or not blik_code.isdigit() or len(blik_code) != 6:
+            flash('Wprowadź poprawny 6-cyfrowy kod BLIK.', 'danger')
+            return render_template('checkout.html', cart=cart, total=total, user=user)
+        if not cart or total <= 0:
+            flash('Twój koszyk jest pusty.', 'danger')
+            return redirect(url_for('home'))
+        try:
+            order_id = database.create_order(
+                user_id=session['user_id'],
+                full_name=full_name,
+                address=address,
+                cart=cart,
+                total=total
+            )
+            session['cart'] = {}
+            session.modified = True
+            flash('Zamówienie zostało złożone pomyślnie!', 'success')
+            return redirect(url_for('order_confirmation', order_id=order_id))
+        except Exception as e:
+            flash(f'Błąd podczas składania zamówienia: {e}', 'danger')
+            return render_template('checkout.html', cart=cart, total=total, user=user)
+    return render_template('checkout.html', cart=cart, total=total, user=user)
+
+@app.route('/order_confirmation/<int:order_id>')
+def order_confirmation(order_id):
+    return render_template('order_confirmation.html', order_id=order_id)
 
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
@@ -114,7 +176,9 @@ def add_to_cart():
         session.modified = True
         flash('Produkt dodany do koszyka!', 'success')
     
-    return redirect(url_for('category_page', category=product['category']))
+    # Redirect back to referring page, or home if not available
+    referrer = request.referrer or url_for('home')
+    return redirect(referrer)
 
 @app.route('/cart')
 def view_cart():
