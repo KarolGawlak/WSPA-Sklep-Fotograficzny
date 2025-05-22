@@ -150,6 +150,17 @@ def checkout():
 def order_confirmation(order_id):
     return render_template('order_confirmation.html', order_id=order_id)
 
+@app.route('/order_history')
+def order_history():
+    if 'user_id' not in session:
+        flash('Musisz być zalogowany, aby zobaczyć historię zamówień.', 'danger')
+        return redirect(url_for('login', next=url_for('order_history')))
+    orders = database.get_orders_for_user(session['user_id'])
+    # Attach items to each order
+    for order in orders:
+        order['items'] = database.get_order_items(order['id'])
+    return render_template('order_history.html', orders=orders)
+
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
     product_name = request.form.get('product_name')
@@ -386,6 +397,14 @@ def submit_review(product_id):
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
+
+@app.route('/admin/orders')
+def admin_orders():
+    if not session.get('is_admin'):
+        flash('Brak dostępu. Tylko administratorzy mogą przeglądać zamówienia.', 'danger')
+        return redirect(url_for('home'))
+    orders = database.get_all_orders_with_users()
+    return render_template('admin/orders.html', orders=orders)
 
 if __name__ == '__main__':
     app.run(debug=True) 

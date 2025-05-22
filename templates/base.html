@@ -53,10 +53,19 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> Moje konto</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-history"></i> Historia zamówień</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('order_history') }}"><i class="fas fa-history"></i> Historia zamówień</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Wyloguj się</a></li>
                                 </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Moje Konto ({{ session.user_email }})</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('order_history') }}">Historia zamówień</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('logout') }}">Wyloguj</a>
                             </li>
                         {% else %}
                             <li class="nav-item">

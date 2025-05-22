@@ -197,6 +197,32 @@ def get_user_by_id(user_id):
         user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         return dict(user) if user else None
 
+def get_orders_for_user(user_id):
+    with get_db() as db:
+        rows = db.execute('''
+            SELECT * FROM orders WHERE user_id = ? ORDER BY order_date DESC, id DESC
+        ''', (user_id,)).fetchall()
+        return [dict(row) for row in rows]
+
+def get_all_orders_with_users():
+    """Fetch all orders with user email for admin panel."""
+    with get_db() as db:
+        rows = db.execute('''
+            SELECT o.*, u.email as user_email FROM orders o
+            LEFT JOIN users u ON o.user_id = u.id
+            ORDER BY o.order_date DESC, o.id DESC
+        ''').fetchall()
+        return [dict(row) for row in rows]
+
+def get_order_items(order_id):
+    with get_db() as db:
+        rows = db.execute('''
+            SELECT oi.*, p.name, p.image FROM order_items oi
+            JOIN products p ON oi.product_id = p.id
+            WHERE oi.order_id = ?
+        ''', (order_id,)).fetchall()
+        return [dict(row) for row in rows]
+
 
 def create_order(user_id, full_name, address, cart, total):
     """
