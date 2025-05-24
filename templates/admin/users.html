@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Zarządzanie użytkownikami{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Zarządzanie użytkownikami</h1>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Imię i nazwisko</th>
+                <th>Adres</th>
+                <th>Admin</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.address }}</td>
+                <td>{% if user.is_admin %}<span class="badge bg-success">TAK</span>{% else %}<span class="badge bg-secondary">NIE</span>{% endif %}</td>
+                <td>
+                    <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-sm btn-primary">Edytuj</a>
+                    <form method="post" action="{{ url_for('admin_delete_user', user_id=user.id) }}" style="display:inline-block;" onsubmit="return confirm('Na pewno usunąć użytkownika?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Usuń</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

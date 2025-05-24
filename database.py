@@ -412,3 +412,13 @@ def update_user_password(user_id, new_password_hash):
     with get_db() as db:
         db.execute('UPDATE users SET password_hash = ? WHERE id = ?', (new_password_hash, user_id))
         db.commit()
+
+def get_all_users():
+    with get_db() as db:
+        rows = db.execute('SELECT * FROM users ORDER BY id').fetchall()
+        return [dict(row) for row in rows]
+
+def delete_user(user_id):
+    with get_db() as db:
+        db.execute('DELETE FROM users WHERE id = ?', (user_id,))
+        db.commit()

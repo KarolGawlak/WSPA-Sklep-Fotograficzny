@@ -406,6 +406,63 @@ def admin_orders():
     orders = database.get_all_orders_with_users()
     return render_template('admin/orders.html', orders=orders)
 
+@app.route('/admin/users')
+def admin_users():
+    if not session.get('is_admin'):
+        flash('Brak dostępu.', 'danger')
+        return redirect(url_for('home'))
+    users = database.get_all_users()
+    return render_template('admin/users.html', users=users)
+
+@app.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
+def admin_edit_user(user_id):
+    from werkzeug.security import generate_password_hash
+    if not session.get('is_admin'):
+        flash('Brak dostępu.', 'danger')
+        return redirect(url_for('home'))
+    user = database.get_user_by_id(user_id)
+    if not user:
+        flash('Nie znaleziono użytkownika.', 'danger')
+        return redirect(url_for('admin_users'))
+    if request.method == 'POST':
+        full_name = request.form.get('full_name', '').strip()
+        email = request.form.get('email', '').strip()
+        address = request.form.get('address', '').strip()
+        is_admin = int(request.form.get('is_admin', 0))
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        if not full_name or not email:
+            flash('Imię i nazwisko oraz email są wymagane.', 'danger')
+        elif new_password and new_password != confirm_password:
+            flash('Nowe hasła nie są zgodne.', 'danger')
+        elif new_password and len(new_password) < 6:
+            flash('Nowe hasło musi mieć przynajmniej 6 znaków.', 'danger')
+        else:
+            try:
+                database.update_user_info(user_id, full_name, email, address)
+                with database.get_db() as db:
+                    db.execute('UPDATE users SET is_admin = ? WHERE id = ?', (is_admin, user_id))
+                    db.commit()
+                if new_password:
+                    database.update_user_password(user_id, generate_password_hash(new_password))
+                flash('Dane użytkownika zostały zaktualizowane.', 'success')
+                return redirect(url_for('admin_users'))
+            except Exception as e:
+                flash('Błąd podczas aktualizacji danych: ' + str(e), 'danger')
+    return render_template('admin/edit_user.html', user=user)
+
+@app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+def admin_delete_user(user_id):
+    if not session.get('is_admin'):
+        flash('Brak dostępu.', 'danger')
+        return redirect(url_for('home'))
+    if user_id == session.get('user_id'):
+        flash('Nie można usunąć własnego konta przez panel admina.', 'danger')
+        return redirect(url_for('admin_users'))
+    database.delete_user(user_id)
+    flash('Użytkownik został usunięty.', 'success')
+    return redirect(url_for('admin_users'))
+
 @app.route('/admin/orders/<int:order_id>', methods=['GET', 'POST'])
 def admin_order_detail(order_id):
     if not session.get('is_admin'):
