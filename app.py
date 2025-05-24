@@ -406,5 +406,23 @@ def admin_orders():
     orders = database.get_all_orders_with_users()
     return render_template('admin/orders.html', orders=orders)
 
+@app.route('/admin/orders/<int:order_id>', methods=['GET', 'POST'])
+def admin_order_detail(order_id):
+    if not session.get('is_admin'):
+        flash('Brak dostępu.', 'danger')
+        return redirect(url_for('home'))
+    order = database.get_order_by_id(order_id)
+    if not order:
+        flash('Nie znaleziono zamówienia.', 'danger')
+        return redirect(url_for('admin_orders'))
+    order['items'] = database.get_order_items(order_id)
+    if request.method == 'POST':
+        new_status = request.form.get('status')
+        if new_status and new_status != order['status']:
+            database.update_order_status(order_id, new_status)
+            flash('Status zamówienia został zaktualizowany.', 'success')
+            return redirect(url_for('admin_order_detail', order_id=order_id))
+    return render_template('admin/order_detail.html', order=order)
+
 if __name__ == '__main__':
     app.run(debug=True) 

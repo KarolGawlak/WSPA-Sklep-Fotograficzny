@@ -40,32 +40,20 @@
                             </a>
                         </li>
                         {% if 'user_id' in session %}
-                            {% if session.is_admin %}
-                            <li class="nav-item">
-                                <a href="{{ url_for('add_product') }}" class="nav-link">
-                                    <i class="fas fa-plus-circle"></i> Dodaj produkt
-                                </a>
-                            </li>
-                            {% endif %}
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-user"></i> {{ session.user_email }}
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown" style="max-height: 350px; overflow-y: auto; min-width: 240px; z-index: 1050;">
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> Moje konto</a></li>
                                     <li><a class="dropdown-item" href="{{ url_for('order_history') }}"><i class="fas fa-history"></i> Historia zamówień</a></li>
+                                    {% if session.is_admin %}
+                                    <li><a class="dropdown-item" href="{{ url_for('admin_orders') }}"><i class="fas fa-clipboard-list"></i> Zarządzaj zamówieniami</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('add_product') }}"><i class="fas fa-plus-circle"></i> Dodaj produkt</a></li>
                                     <li><hr class="dropdown-divider"></li>
+                                    {% endif %}
                                     <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Wyloguj się</a></li>
                                 </ul>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Moje Konto ({{ session.user_email }})</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('order_history') }}">Historia zamówień</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('logout') }}">Wyloguj</a>
                             </li>
                         {% else %}
                             <li class="nav-item">

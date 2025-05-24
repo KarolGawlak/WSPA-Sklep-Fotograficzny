@@ -214,6 +214,20 @@ def get_all_orders_with_users():
         ''').fetchall()
         return [dict(row) for row in rows]
 
+def get_order_by_id(order_id):
+    with get_db() as db:
+        row = db.execute('''
+            SELECT o.*, u.email as user_email FROM orders o
+            LEFT JOIN users u ON o.user_id = u.id
+            WHERE o.id = ?
+        ''', (order_id,)).fetchone()
+        return dict(row) if row else None
+
+def update_order_status(order_id, new_status):
+    with get_db() as db:
+        db.execute('UPDATE orders SET status = ? WHERE id = ?', (new_status, order_id))
+        db.commit()
+
 def get_order_items(order_id):
     with get_db() as db:
         rows = db.execute('''
