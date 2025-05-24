@@ -393,7 +393,22 @@ def create_user(email, password_hash, full_name, address):
         except sqlite3.IntegrityError: # Handles UNIQUE constraint violation for email
             return False # Indicate failure (e.g., email already exists)
 
+def get_user_by_id(user_id):
+    with get_db() as db:
+        row = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+        return dict(row) if row else None
+
 def get_user_by_email(email):
     with get_db() as db:
         user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         return dict(user) if user else None
+
+def update_user_info(user_id, full_name, email, address):
+    with get_db() as db:
+        db.execute('UPDATE users SET full_name = ?, email = ?, address = ? WHERE id = ?', (full_name, email, address, user_id))
+        db.commit()
+
+def update_user_password(user_id, new_password_hash):
+    with get_db() as db:
+        db.execute('UPDATE users SET password_hash = ? WHERE id = ?', (new_password_hash, user_id))
+        db.commit()

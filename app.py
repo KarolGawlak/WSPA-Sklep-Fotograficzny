@@ -424,5 +424,48 @@ def admin_order_detail(order_id):
             return redirect(url_for('admin_order_detail', order_id=order_id))
     return render_template('admin/order_detail.html', order=order)
 
+@app.route('/account', methods=['GET', 'POST'])
+def account():
+    from werkzeug.security import check_password_hash, generate_password_hash
+    if 'user_id' not in session:
+        flash('Musisz być zalogowany, aby zobaczyć swoje konto.', 'danger')
+        return redirect(url_for('login'))
+    user = database.get_user_by_id(session['user_id'])
+    if request.method == 'POST':
+        # Password change form
+        if request.form.get('change_password') == '1':
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_password', '')
+            if not current_password or not new_password or not confirm_password:
+                flash('Wszystkie pola są wymagane.', 'danger')
+            elif not check_password_hash(user['password_hash'], current_password):
+                flash('Aktualne hasło jest nieprawidłowe.', 'danger')
+            elif new_password != confirm_password:
+                flash('Nowe hasła nie są zgodne.', 'danger')
+            elif len(new_password) < 6:
+                flash('Nowe hasło musi mieć przynajmniej 6 znaków.', 'danger')
+            else:
+                new_hash = generate_password_hash(new_password)
+                database.update_user_password(session['user_id'], new_hash)
+                flash('Hasło zostało zmienione.', 'success')
+                return redirect(url_for('account'))
+        # Account info form
+        else:
+            full_name = request.form.get('full_name', '').strip()
+            email = request.form.get('email', '').strip()
+            address = request.form.get('address', '').strip()
+            if not full_name or not email:
+                flash('Imię i nazwisko oraz email są wymagane.', 'danger')
+            else:
+                try:
+                    database.update_user_info(session['user_id'], full_name, email, address)
+                    session['user_email'] = email
+                    flash('Dane konta zostały zaktualizowane.', 'success')
+                    return redirect(url_for('account'))
+                except Exception as e:
+                    flash('Błąd podczas aktualizacji danych: ' + str(e), 'danger')
+    return render_template('account.html', user=user)
+
 if __name__ == '__main__':
     app.run(debug=True) 
