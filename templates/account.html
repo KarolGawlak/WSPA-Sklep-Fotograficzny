@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Moje konto{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Moje konto</h1>
+    <form method="post" class="card p-4 shadow-sm" style="max-width: 500px; margin: auto;">
+        <div class="mb-3">
+            <label for="full_name" class="form-label">Imię i nazwisko</label>
+            <input type="text" class="form-control" id="full_name" name="full_name" required value="{{ user.full_name }}">
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required value="{{ user.email }}">
+        </div>
+        <div class="mb-3">
+            <label for="address" class="form-label">Adres</label>
+            <textarea class="form-control" id="address" name="address" rows="3">{{ user.address }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+    </form>
+</div>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card mt-4">
+                <div class="card-header bg-secondary text-white">Zmień hasło</div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('account') }}">
+                        <input type="hidden" name="change_password" value="1">
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Aktualne hasło</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">Nowe hasło</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Powtórz nowe hasło</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="6">
+                        </div>
+                        <button type="submit" class="btn btn-warning">Zmień hasło</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

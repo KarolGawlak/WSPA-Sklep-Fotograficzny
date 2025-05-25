@@ -3,6 +3,53 @@
 {% block content %}
 <div class="container">
     <h1 class="category-title">{{ category|title }}</h1>
+    <!-- Filter & Sort Bar -->
+    <form method="get" class="mb-4">
+        <div class="row align-items-end g-3">
+            <!-- Sort -->
+            <div class="col-12 col-md-3">
+                <label for="sort" class="form-label">Sortuj według:</label>
+                <select class="form-select" id="sort" name="sort">
+                    <option value="newest" {% if request.args.get('sort') == 'newest' %}selected{% endif %}>Najnowsze</option>
+                    <option value="price_asc" {% if request.args.get('sort') == 'price_asc' %}selected{% endif %}>Cena rosnąco</option>
+                    <option value="price_desc" {% if request.args.get('sort') == 'price_desc' %}selected{% endif %}>Cena malejąco</option>
+                    <option value="name_asc" {% if request.args.get('sort') == 'name_asc' %}selected{% endif %}>Nazwa A-Z</option>
+                    <option value="name_desc" {% if request.args.get('sort') == 'name_desc' %}selected{% endif %}>Nazwa Z-A</option>
+                </select>
+            </div>
+
+            <!-- Brand Filter (if available) -->
+            {% if brands %}
+            <div class="col-12 col-md-4">
+                <label class="form-label">Marka:</label>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for brand in brands %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="brand" value="{{ brand }}" id="brand_{{ loop.index }}"
+                            {% if brand in request.args.getlist('brand') %}checked{% endif %}>
+                        <label class="form-check-label" for="brand_{{ loop.index }}">{{ brand }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Price Range -->
+            <div class="col-12 col-md-3">
+                <label class="form-label">Cena:</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" name="price_min" placeholder="Min" min="0" step="0.01" value="{{ request.args.get('price_min', '') }}">
+                    <span class="input-group-text">-</span>
+                    <input type="number" class="form-control" name="price_max" placeholder="Max" min="0" step="0.01" value="{{ request.args.get('price_max', '') }}">
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="col-12 col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Filtruj</button>
+            </div>
+        </div>
+    </form>
     
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -15,19 +62,26 @@
     <div class="products-grid">
         {% for product in products %}
         <div class="product-card">
-            <img src="{{ url_for('static', filename='images/products/' + product.image) }}" 
-                 alt="{{ product.name }}" 
-                 class="product-image">
-            <div class="product-info">
-                <h3>{{ product.name }}</h3>
-                <p class="product-description">{{ product.description }}</p>
-                <p class="product-price">{{ "%.2f"|format(product.price) }} zł</p>
-                <form action="{{ url_for('add_to_cart') }}" method="POST">
-                    <input type="hidden" name="category" value="{{ category }}">
-                    <input type="hidden" name="product_name" value="{{ product.name }}">
-                    <button type="submit" class="btn btn-primary">Dodaj do koszyka</button>
-                </form>
-            </div>
+            <a href="{{ url_for('product_detail', product_identifier=product.slug) }}" class="text-decoration-none d-block">
+                <div class="product-image-container">
+                    <img src="{{ url_for('static', filename='images/products/' + product.image) }}" 
+                         alt="{{ product.name }}" 
+                         class="product-image">
+                </div>
+                <div class="product-info">
+                    <span class="category-badge">{{ product.category_name }}</span>
+                    <h3 class="text-dark">{{ product.name }}</h3>
+                    <p class="product-description">{{ product.description|truncate(100) }}</p>
+                    <p class="product-price text-primary">{{ "%.2f"|format(product.price) }} zł</p>
+                </div>
+            </a>
+            <form action="{{ url_for('add_to_cart') }}" method="POST" class="mt-2 px-3 pb-3">
+                <input type="hidden" name="category" value="{{ category }}">
+                <input type="hidden" name="product_name" value="{{ product.name }}">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-shopping-cart me-1"></i> Dodaj do koszyka
+                </button>
+            </form>
         </div>
         {% endfor %}
     </div>

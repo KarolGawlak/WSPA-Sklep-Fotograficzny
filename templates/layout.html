@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>{% block title %}WSPA Photo Store{% endblock %}</title>
+    <style>
+        body { padding-top: 5rem; }
+        .flash-messages .alert { margin-bottom: 0; border-radius: 0; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+        <a class="navbar-brand" href="{{ url_for('home') }}">WSPA Photo Store</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+                </li>
+                <!-- Category links can be dynamically added here if needed -->
+                 <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownCategories" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Kategorie
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdownCategories">
+                        {% set categories = get_categories_for_nav() %} <!-- Assuming a context processor or direct passing -->
+                        {% if categories %}
+                            {% for category in categories %}
+                            <a class="dropdown-item" href="{{ url_for('category_page', category=category.slug) }}">{{ category.name }}</a>
+                            {% endfor %}
+                        {% else %}
+                            <a class="dropdown-item" href="#">Brak kategorii</a>
+                        {% endif %}
+                    </div>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                {% if session.user_id %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Moje Konto ({{ session.user_email }})</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Wyloguj</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('register') }}">Rejestracja</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    </li>
+                {% endif %}
+                <li class="nav-item">
+                    {# Robust cart badge calculation #}
+                    {% set cart_items = session.cart.values() if session.cart else [] %}
+                    {% set total_qty = (cart_items | map(attribute='quantity') | select | sum) if cart_items|length > 0 else 0 %}
+                    <a class="nav-link" href="{{ url_for('view_cart') }}">Koszyk 
+                        <span class="badge badge-pill badge-{{ 'success' if total_qty > 0 else 'secondary' }}">{{ total_qty }}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <main role="main" class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container mt-5 pt-3 border-top">
+        <p>&copy; WSPA Photo Store 2024</p>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html> 

@@ -39,7 +39,7 @@
         <div class="cart-summary">
             <h3>Podsumowanie</h3>
             <p class="cart-total">Razem do zapłaty: {{ "%.2f"|format(total) }} zł</p>
-            <button class="btn btn-success btn-lg">Przejdź do kasy</button>
+            <a href="{{ url_for('checkout') }}" class="btn btn-success btn-lg">Przejdź do kasy</a>
         </div>
     {% else %}
         <div class="empty-cart">

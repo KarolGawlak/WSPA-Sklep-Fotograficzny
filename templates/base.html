@@ -1,48 +1,150 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Equipment Store</title>
+    <title>{% block title %}WSPA Photo Store{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <header>
-        <nav class="main-nav">
+        <!-- Main Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
-                <div class="nav-items">
-                    <a href="/" class="nav-item home-link"><i class="icon-home"></i>Strona główna</a>
-                    <a href="/fotografia" class="nav-item"><i class="icon-photo"></i>Fotografia</a>
-                    <a href="/filmowanie" class="nav-item"><i class="icon-video"></i>Filmowanie</a>
-                    <a href="/studio" class="nav-item"><i class="icon-studio"></i>Studio</a>
-                    <a href="/druk" class="nav-item"><i class="icon-print"></i>Druk i edycja</a>
-                    <a href="/drony" class="nav-item"><i class="icon-drone"></i>Drony</a>
-                    <a href="/mobile" class="nav-item"><i class="icon-mobile"></i>Fot. mobile</a>
-                    <a href="/analogowa" class="nav-item"><i class="icon-analog"></i>Fot. analogowa</a>
-                    <a href="{{ url_for('view_cart') }}" class="nav-item cart-link">
-                        <i class="icon-cart"></i>Koszyk
-                        {% if session.cart %}
-                            <span class="cart-count">{{ session.cart|length }}</span>
+                <a class="navbar-brand" href="{{ url_for('home') }}">WSPA Photo Store</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        {% for category in get_categories_for_nav() %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('category_page', category=category.slug) }}">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item me-2">
+                            <a href="{{ url_for('view_cart') }}" class="btn btn-outline-light position-relative">
+                                <i class="fas fa-shopping-cart"></i> Koszyk
+                                {% if session.cart %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{ session.cart|length }}
+                                </span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        {% if 'user_id' in session %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user"></i> {{ session.user_email }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown" style="max-height: 350px; overflow-y: auto; min-width: 240px; z-index: 1050;">
+                                    <li><a class="dropdown-item" href="{{ url_for('account') }}"><i class="fas fa-user-circle"></i> Moje konto</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('order_history') }}"><i class="fas fa-history"></i> Historia zamówień</a></li>
+                                    {% if session.is_admin %}
+                                    <li><a class="dropdown-item" href="{{ url_for('admin_orders') }}"><i class="fas fa-clipboard-list"></i> Zarządzaj zamówieniami</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('add_product') }}"><i class="fas fa-plus-circle"></i> Dodaj produkt</a></li>
+<li><a class="dropdown-item" href="{{ url_for('admin_users') }}"><i class="fas fa-users-cog"></i> Zarządzaj użytkownikami</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    {% endif %}
+                                    <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Wyloguj się</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a href="{{ url_for('login') }}" class="nav-link">
+                                    <i class="fas fa-sign-in-alt"></i> Zaloguj się
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('register') }}" class="nav-link">
+                                    <i class="fas fa-user-plus"></i> Zarejestruj się
+                                </a>
+                            </li>
                         {% endif %}
-                    </a>
+                    </ul>
                 </div>
             </div>
         </nav>
+        
+        <!-- Search Bar -->
+        <div class="bg-light py-2 shadow-sm">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-12 col-md-8 col-lg-6">
+                        <form action="{{ url_for('search') }}" method="get" class="mb-0">
+                            <div class="input-group">
+                                <input class="form-control form-control-lg border-primary" 
+                                       type="search" 
+                                       name="q" 
+                                       placeholder="Wpisz nazwę lub opis produktu..." 
+                                       aria-label="Szukaj produktów" 
+                                       required>
+                                <button class="btn btn-primary px-4" type="submit">
+                                    <i class="fas fa-search me-1"></i> Szukaj
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </header>
+</header>
 
-    <main>
-        {% block content %}{% endblock %}
+    <main class="py-4">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
-    <footer>
+    <footer class="bg-dark text-white py-4 mt-5">
         <div class="container">
-            <p>&copy; 2024 Photo Equipment Store. All rights reserved.</p>
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>O nas</h5>
+                    <p>WSPA Photo Store to profesjonalny sklep fotograficzny oferujący sprzęt najwyższej jakości.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Kontakt</h5>
+                    <p>Email: kontakt@wspaphoto.pl<br>Telefon: +48 123 456 789</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Obserwuj nas</h5>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-2"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white me-2"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white me-2"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="text-center">
+                <p class="mb-0">&copy; {{ now.year }} WSPA Photo Store. Wszelkie prawa zastrzeżone.</p>
+            </div>
         </div>
     </footer>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html> 
