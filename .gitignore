@@ -1,6 +1,5 @@
 .venv
 __pycache__
-useful_scripts.txt
 jira sprint2csv.csv
 implementation_details/
 prd_realization_progress.txt
