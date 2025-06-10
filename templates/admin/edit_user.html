@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Edycja użytkownika{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Edycja użytkownika</h1>
+    <form method="post" class="card p-4 shadow-sm mx-auto" style="max-width: 500px;">
+        <div class="mb-3">
+            <label for="full_name" class="form-label">Imię i nazwisko</label>
+            <input type="text" class="form-control" id="full_name" name="full_name" required value="{{ user.full_name }}">
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required value="{{ user.email }}">
+        </div>
+        <div class="mb-3">
+            <label for="address" class="form-label">Adres</label>
+            <textarea class="form-control" id="address" name="address" rows="3">{{ user.address }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="is_admin" class="form-label">Uprawnienia administratora</label>
+            <select class="form-select" id="is_admin" name="is_admin">
+                <option value="0" {% if not user.is_admin %}selected{% endif %}>Użytkownik</option>
+                <option value="1" {% if user.is_admin %}selected{% endif %}>Administrator</option>
+            </select>
+        </div>
+        <hr>
+        <h5 class="mb-3">Zmień hasło</h5>
+        <div class="mb-3">
+            <label for="new_password" class="form-label">Nowe hasło</label>
+            <input type="password" class="form-control" id="new_password" name="new_password" minlength="6">
+        </div>
+        <div class="mb-3">
+            <label for="confirm_password" class="form-label">Powtórz nowe hasło</label>
+            <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6">
+        </div>
+        <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-success flex-fill">Zapisz zmiany</button>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary flex-fill">Anuluj</a>
+</div>
+    </form>
+</div>
+{% endblock %}

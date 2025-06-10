@@ -1,0 +1,8 @@
+admin@example.com
+admin123
+
+test@gmail.com 
+test12
+
+sqlite3 store.db
+select * from <table_name>;

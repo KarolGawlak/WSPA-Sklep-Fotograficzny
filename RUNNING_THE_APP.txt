@@ -1,0 +1,46 @@
+# Jak uruchomić aplikację WSPA Photo Store
+
+1. **Instalacja Pythona**
+   - Pobierz i zainstaluj Python 3.8 lub nowszy ze strony https://www.python.org/downloads/
+   - Upewnij się, że zaznaczono opcję "Add Python to PATH" podczas instalacji.
+
+2. **Utworzenie i aktywacja wirtualnego środowiska (Zalecane)**
+   - Otwórz terminal (cmd, PowerShell lub Terminal).
+   - Przejdź do folderu projektu.
+   - Uruchom:
+     ```
+     python -m venv .venv
+     ```
+   - Aktywuj wirtualne środowisko:
+     - Na Windows:
+       ```
+       .venv\Scripts\activate
+       ```
+     - Na Mac/Linux:
+       ```
+       source .venv/bin/activate
+       ```
+
+3. **Instalacja wymaganych pakietów**
+   - Uruchom:
+     ```
+     pip install -r requirements.txt
+     ```
+
+4. **Inicjalizacja bazy danych (jeśli potrzebna)**
+   - Jeśli plik bazy danych (`store.db`) nie istnieje, zostanie utworzony automatycznie podczas uruchomienia aplikacji.
+   - (Opcjonalnie) Jeśli potrzebujesz zainicjalizować tabele, możesz wykorzystać funkcję `init_db()` z pliku `database.py`.
+
+5. **Uruchomienie aplikacji**
+   - Uruchom aplikację Flask komendą:
+     ```
+     python app.py
+     ```
+   - Aplikacja będzie dostępna pod adresem http://127.0.0.1:5000/
+
+6. **Logowanie jako administrator lub użytkownik testowy**
+   - Użyj danych logowania z pliku `useful_scripts.txt` (np. admin@example.com / admin123)
+
+---
+
+Jeśli napotkasz problemy, upewnij się, że jesteś w odpowiednim folderze i Twoje wirtualne środowisko jest aktywowane.

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Strona nie znaleziona - WSPA Photo Store{% endblock %}
+
+{% block content %}
+<div class="container my-5 text-center">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h1 class="display-1 text-muted">404</h1>
+                    <h2 class="mb-4">Ups! Strona nie została znaleziona</h2>
+                    <p class="lead mb-4">
+                        Przepraszamy, ale strona, której szukasz, nie istnieje lub została przeniesiona.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ url_for('home') }}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>Strona główna
+                        </a>
+                        <a href="#" onclick="window.history.back()" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Wróć
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
