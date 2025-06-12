@@ -28,7 +28,6 @@ def init_db():
         )
         """)
 
-        # Categories table (updated to ensure slug is present as per PRD)
         db.execute("""
         CREATE TABLE IF NOT EXISTS categories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +36,6 @@ def init_db():
         )
         """)
 
-        # Products table (with recommended additions)
         db.execute("""
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,7 +52,6 @@ def init_db():
         )
         """)
 
-        # Orders table
         db.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,7 +64,6 @@ def init_db():
         )
         """)
 
-        # Order Items table
         db.execute("""
         CREATE TABLE IF NOT EXISTS order_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,7 +76,6 @@ def init_db():
         )
         """)
 
-        # Product Reviews table
         db.execute("""
         CREATE TABLE IF NOT EXISTS product_reviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -94,9 +89,6 @@ def init_db():
         )
         """)
 
-        # Indexes (as per PRD section 3.6, SQLite auto-creates for PK and UNIQUE)
-        # Explicitly creating indexes for foreign keys as good practice,
-        # though some SQLite versions might do it for F_K_ON.
         db.execute(
             "CREATE INDEX IF NOT EXISTS idx_products_category_id ON products (category_id)"
         )
@@ -113,39 +105,6 @@ def init_db():
         db.execute(
             "CREATE INDEX IF NOT EXISTS idx_product_reviews_user_id ON product_reviews (user_id)"
         )
-
-        # Note: Sample data insertion removed for now. Will be handled later if needed.
-        # # Insert initial categories
-        # categories = [
-        #     ('Fotografia', 'fotografia'),
-        #     ('Filmowanie', 'filmowanie'),
-        #     ('Studio', 'studio'),
-        #     ('Druk i edycja', 'druk'),
-        #     ('Drony', 'drony'),
-        #     ('Fotografia mobilna', 'mobile'),
-        #     ('Fotografia analogowa', 'analogowa')
-        # ]
-        #
-        # db.executemany(
-        #     'INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)',
-        #     categories
-        # )
-        #
-        # # Insert sample products - THIS WILL FAIL WITHOUT UPDATING TO NEW SCHEMA
-        # # products = [
-        # #     ('Canon EOS R6', 12999.00, 'Profesjonalny aparat bezlusterkowy', 'eos_r6.jpg', 'fotografia'),
-        # #     ('Sony A7 IV', 13499.00, 'Pełnoklatkowy aparat mirrorless', 'sony_a7iv.jpg', 'fotografia'),
-        # # ]
-        # #
-        # # for product in products:
-        # #     name, price, description, image, category_slug = product
-        # #     # This needs to be updated if products table has new NOT NULL fields or different structure
-        # #     db.execute('''
-        # #         INSERT OR IGNORE INTO products (name, price, description, image, category_id)
-        # #         SELECT ?, ?, ?, ?, categories.id
-        # #         FROM categories
-        # #         WHERE categories.slug = ?
-        # #     ''', (name, price, description, image, category_slug))
 
         db.commit()
 
