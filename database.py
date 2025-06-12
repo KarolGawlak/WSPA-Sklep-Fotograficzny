@@ -1,7 +1,8 @@
 import sqlite3
 from contextlib import contextmanager
 
-DATABASE = 'store.db'
+DATABASE = "store.db"
+
 
 @contextmanager
 def get_db():
@@ -11,6 +12,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 def init_db():
     with get_db() as db:
@@ -34,7 +36,7 @@ def init_db():
             slug TEXT NOT NULL UNIQUE
         )
         """)
-        
+
         # Products table (with recommended additions)
         db.execute("""
         CREATE TABLE IF NOT EXISTS products (
@@ -51,7 +53,7 @@ def init_db():
             FOREIGN KEY (category_id) REFERENCES categories (id)
         )
         """)
-        
+
         # Orders table
         db.execute("""
         CREATE TABLE IF NOT EXISTS orders (
@@ -64,7 +66,7 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
         """)
-        
+
         # Order Items table
         db.execute("""
         CREATE TABLE IF NOT EXISTS order_items (
@@ -77,7 +79,7 @@ def init_db():
             FOREIGN KEY (product_id) REFERENCES products (id)
         )
         """)
-        
+
         # Product Reviews table
         db.execute("""
         CREATE TABLE IF NOT EXISTS product_reviews (
@@ -95,12 +97,22 @@ def init_db():
         # Indexes (as per PRD section 3.6, SQLite auto-creates for PK and UNIQUE)
         # Explicitly creating indexes for foreign keys as good practice,
         # though some SQLite versions might do it for F_K_ON.
-        db.execute("CREATE INDEX IF NOT EXISTS idx_products_category_id ON products (category_id)")
+        db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_products_category_id ON products (category_id)"
+        )
         db.execute("CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id)")
-        db.execute("CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items (order_id)")
-        db.execute("CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items (product_id)")
-        db.execute("CREATE INDEX IF NOT EXISTS idx_product_reviews_product_id ON product_reviews (product_id)")
-        db.execute("CREATE INDEX IF NOT EXISTS idx_product_reviews_user_id ON product_reviews (user_id)")
+        db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items (order_id)"
+        )
+        db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items (product_id)"
+        )
+        db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_product_reviews_product_id ON product_reviews (product_id)"
+        )
+        db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_product_reviews_user_id ON product_reviews (user_id)"
+        )
 
         # Note: Sample data insertion removed for now. Will be handled later if needed.
         # # Insert initial categories
@@ -113,18 +125,18 @@ def init_db():
         #     ('Fotografia mobilna', 'mobile'),
         #     ('Fotografia analogowa', 'analogowa')
         # ]
-        # 
+        #
         # db.executemany(
         #     'INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)',
         #     categories
         # )
-        # 
+        #
         # # Insert sample products - THIS WILL FAIL WITHOUT UPDATING TO NEW SCHEMA
         # # products = [
         # #     ('Canon EOS R6', 12999.00, 'Profesjonalny aparat bezlusterkowy', 'eos_r6.jpg', 'fotografia'),
         # #     ('Sony A7 IV', 13499.00, 'Pełnoklatkowy aparat mirrorless', 'sony_a7iv.jpg', 'fotografia'),
         # # ]
-        # # 
+        # #
         # # for product in products:
         # #     name, price, description, image, category_slug = product
         # #     # This needs to be updated if products table has new NOT NULL fields or different structure
@@ -134,10 +146,13 @@ def init_db():
         # #         FROM categories
         # #         WHERE categories.slug = ?
         # #     ''', (name, price, description, image, category_slug))
-        
+
         db.commit()
 
-def get_products_by_category(category_slug, brands=None, price_min=None, price_max=None, sort=None):
+
+def get_products_by_category(
+    category_slug, brands=None, price_min=None, price_max=None, sort=None
+):
     """
     Get products by category, with optional filtering (brands, price range) and sorting.
     brands: list of brand names (or None)
@@ -145,17 +160,17 @@ def get_products_by_category(category_slug, brands=None, price_min=None, price_m
     price_max: maximum price (or None)
     sort: 'price_asc', 'price_desc', 'name_asc', 'name_desc', 'newest' (default: newest)
     """
-    query = '''
+    query = """
         SELECT products.*, categories.name as category_name, categories.slug as category_slug
         FROM products
         JOIN categories ON products.category_id = categories.id
         WHERE categories.slug = ?
-    '''
+    """
     params = [category_slug]
-    
+
     # Filter by brands
     if brands:
-        query += f" AND products.brand IN ({','.join(['?']*len(brands))})"
+        query += f" AND products.brand IN ({','.join(['?'] * len(brands))})"
         params.extend(brands)
     # Filter by price
     if price_min:
@@ -165,13 +180,13 @@ def get_products_by_category(category_slug, brands=None, price_min=None, price_m
         query += " AND products.price <= ?"
         params.append(price_max)
     # Sorting
-    if sort == 'price_asc':
+    if sort == "price_asc":
         query += " ORDER BY products.price ASC"
-    elif sort == 'price_desc':
+    elif sort == "price_desc":
         query += " ORDER BY products.price DESC"
-    elif sort == 'name_asc':
+    elif sort == "name_asc":
         query += " ORDER BY products.name COLLATE NOCASE ASC"
-    elif sort == 'name_desc':
+    elif sort == "name_desc":
         query += " ORDER BY products.name COLLATE NOCASE DESC"
     else:  # newest
         query += " ORDER BY products.date_added DESC"
@@ -183,58 +198,69 @@ def get_products_by_category(category_slug, brands=None, price_min=None, price_m
 def get_brands_for_category(category_slug):
     """Get all unique brands for a given category_slug."""
     with get_db() as db:
-        rows = db.execute('''
+        rows = db.execute(
+            """
             SELECT DISTINCT brand FROM products
             JOIN categories ON products.category_id = categories.id
             WHERE categories.slug = ? AND brand IS NOT NULL AND brand != ''
             ORDER BY brand
-        ''', (category_slug,)).fetchall()
-        return [row['brand'] for row in rows]
+        """,
+            (category_slug,),
+        ).fetchall()
+        return [row["brand"] for row in rows]
 
-
-def get_user_by_id(user_id):
-    with get_db() as db:
-        user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-        return dict(user) if user else None
 
 def get_orders_for_user(user_id):
     with get_db() as db:
-        rows = db.execute('''
+        rows = db.execute(
+            """
             SELECT * FROM orders WHERE user_id = ? ORDER BY order_date DESC, id DESC
-        ''', (user_id,)).fetchall()
+        """,
+            (user_id,),
+        ).fetchall()
         return [dict(row) for row in rows]
+
 
 def get_all_orders_with_users():
     """Fetch all orders with user email for admin panel."""
     with get_db() as db:
-        rows = db.execute('''
+        rows = db.execute("""
             SELECT o.*, u.email as user_email FROM orders o
             LEFT JOIN users u ON o.user_id = u.id
             ORDER BY o.order_date DESC, o.id DESC
-        ''').fetchall()
+        """).fetchall()
         return [dict(row) for row in rows]
+
 
 def get_order_by_id(order_id):
     with get_db() as db:
-        row = db.execute('''
+        row = db.execute(
+            """
             SELECT o.*, u.email as user_email FROM orders o
             LEFT JOIN users u ON o.user_id = u.id
             WHERE o.id = ?
-        ''', (order_id,)).fetchone()
+        """,
+            (order_id,),
+        ).fetchone()
         return dict(row) if row else None
+
 
 def update_order_status(order_id, new_status):
     with get_db() as db:
-        db.execute('UPDATE orders SET status = ? WHERE id = ?', (new_status, order_id))
+        db.execute("UPDATE orders SET status = ? WHERE id = ?", (new_status, order_id))
         db.commit()
+
 
 def get_order_items(order_id):
     with get_db() as db:
-        rows = db.execute('''
+        rows = db.execute(
+            """
             SELECT oi.*, p.name, p.image FROM order_items oi
             JOIN products p ON oi.product_id = p.id
             WHERE oi.order_id = ?
-        ''', (order_id,)).fetchall()
+        """,
+            (order_id,),
+        ).fetchall()
         return [dict(row) for row in rows]
 
 
@@ -245,46 +271,64 @@ def create_order(user_id, full_name, address, cart, total):
     """
     with get_db() as db:
         # Insert order
-        cursor = db.execute('''
+        cursor = db.execute(
+            """
             INSERT INTO orders (user_id, total_amount, status, shipping_address)
             VALUES (?, ?, ?, ?)
-        ''', (user_id, total, 'nowe', f"{full_name}\n{address}"))
+        """,
+            (user_id, total, "nowe", f"{full_name}\n{address}"),
+        )
         order_id = cursor.lastrowid
         # For each cart item, insert into order_items and update stock
         for item in cart.values():
             # Get product_id
-            product = db.execute('SELECT id, stock_quantity FROM products WHERE name = ?', (item['name'],)).fetchone()
+            product = db.execute(
+                "SELECT id, stock_quantity FROM products WHERE name = ?",
+                (item["name"],),
+            ).fetchone()
             if not product:
                 raise Exception(f"Produkt nie istnieje: {item['name']}")
-            if product['stock_quantity'] < item['quantity']:
+            if product["stock_quantity"] < item["quantity"]:
                 raise Exception(f"Brak wystarczającej ilości produktu: {item['name']}")
-            db.execute('''
+            db.execute(
+                """
                 INSERT INTO order_items (order_id, product_id, quantity, unit_price)
                 VALUES (?, ?, ?, ?)
-            ''', (order_id, product['id'], item['quantity'], item['price']))
+            """,
+                (order_id, product["id"], item["quantity"], item["price"]),
+            )
             # Update stock
-            db.execute('UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?', (item['quantity'], product['id']))
+            db.execute(
+                "UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?",
+                (item["quantity"], product["id"]),
+            )
         db.commit()
         return order_id
 
+
 def get_product_by_name(product_name):
     with get_db() as db:
-        product = db.execute('''
+        product = db.execute(
+            """
             SELECT products.*, categories.slug as category
             FROM products 
             JOIN categories ON products.category_id = categories.id
             WHERE products.name = ?
-        ''', (product_name,)).fetchone()
+        """,
+            (product_name,),
+        ).fetchone()
         return dict(product) if product else None
+
 
 def get_categories():
     with get_db() as db:
-        categories = db.execute('SELECT * FROM categories').fetchall()
+        categories = db.execute("SELECT * FROM categories").fetchall()
         return [dict(category) for category in categories]
+
 
 def get_featured_products():
     with get_db() as db:
-        products = db.execute('''
+        products = db.execute("""
             SELECT p.*, c.slug as category, c.name as category_name
             FROM products p
             JOIN categories c ON p.category_id = c.id
@@ -294,131 +338,253 @@ def get_featured_products():
                 GROUP BY category_id
             )
             ORDER BY c.name
-        ''').fetchall()
+        """).fetchall()
         return [dict(product) for product in products]
 
-def add_product(name, price, description, image_filename, category_slug):
+
+def add_product(
+    name,
+    price,
+    description,
+    image_filename,
+    category_slug,
+    brand=None,
+    stock_quantity=0,
+):
+    # Generate URL-friendly slug from product name
+    slug = name.lower().replace(" ", "-")
+    # Remove special characters
+    slug = "".join(c for c in slug if c.isalnum() or c == "-")
+
     with get_db() as db:
-        db.execute('''
-            INSERT INTO products (name, price, description, image, category_id)
-            SELECT ?, ?, ?, ?, categories.id
-            FROM categories
-            WHERE categories.slug = ?
-        ''', (name, price, description, image_filename, category_slug))
-        db.commit()
+        try:
+            # First, get the category id
+            category_id = db.execute(
+                "SELECT id FROM categories WHERE slug = ?", (category_slug,)
+            ).fetchone()
+            if not category_id:
+                raise ValueError(f"Category with slug '{category_slug}' not found")
+
+            cursor = db.execute(
+                """
+                INSERT INTO products (name, price, description, image, category_id, slug, brand, stock_quantity)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+                (
+                    name,
+                    price,
+                    description,
+                    image_filename,
+                    category_id["id"],
+                    slug,
+                    brand,
+                    stock_quantity,
+                ),
+            )
+            db.commit()
+
+            # Return the newly created product
+            new_product = db.execute(
+                """
+                SELECT p.*, c.slug as category_slug, c.name as category_name 
+                FROM products p
+                JOIN categories c ON p.category_id = c.id
+                WHERE p.id = ?
+            """,
+                (cursor.lastrowid,),
+            ).fetchone()
+            return dict(new_product) if new_product else None
+
+        except sqlite3.IntegrityError:
+            # If slug already exists, append a number
+            base_slug = slug
+            counter = 1
+            while True:
+                try:
+                    new_slug = f"{base_slug}-{counter}"
+                    cursor = db.execute(
+                        """
+                        INSERT INTO products (name, price, description, image, category_id, slug, brand, stock_quantity)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                        (
+                            name,
+                            price,
+                            description,
+                            image_filename,
+                            category_id["id"],
+                            new_slug,
+                            brand,
+                            stock_quantity,
+                        ),
+                    )
+                    db.commit()
+
+                    # Return the newly created product
+                    new_product = db.execute(
+                        """
+                        SELECT p.*, c.slug as category_slug, c.name as category_name 
+                        FROM products p
+                        JOIN categories c ON p.category_id = c.id
+                        WHERE p.id = ?
+                    """,
+                        (cursor.lastrowid,),
+                    ).fetchone()
+                    return dict(new_product) if new_product else None
+
+                except sqlite3.IntegrityError:
+                    counter += 1
+                    if counter > 100:  # Prevent infinite loop
+                        raise
+
 
 def get_all_products():
     with get_db() as db:
-        products = db.execute('''
+        products = db.execute("""
             SELECT p.*, c.slug as category, c.name as category_name
             FROM products p
             JOIN categories c ON p.category_id = c.id
-        ''').fetchall()
+        """).fetchall()
         return [dict(product) for product in products]
+
 
 def get_product_by_id_or_slug(identifier):
     """Get product by ID or slug"""
     with get_db() as db:
         # First try to find by ID (if identifier is numeric)
         if str(identifier).isdigit():
-            product = db.execute('''
+            product = db.execute(
+                """
                 SELECT p.*, c.slug as category_slug, c.name as category_name
                 FROM products p
                 LEFT JOIN categories c ON p.category_id = c.id
                 WHERE p.id = ?
-            ''', (int(identifier),)).fetchone()
+            """,
+                (int(identifier),),
+            ).fetchone()
             if product:
                 return dict(product)
-        
+
         # If not found by ID or identifier is not numeric, try by slug
-        product = db.execute('''
+        product = db.execute(
+            """
             SELECT p.*, c.slug as category_slug, c.name as category_name
             FROM products p
             LEFT JOIN categories c ON p.category_id = c.id
             WHERE p.slug = ?
-        ''', (identifier,)).fetchone()
-        
+        """,
+            (identifier,),
+        ).fetchone()
+
         return dict(product) if product else None
+
 
 def get_product_reviews(product_id):
     """Get all reviews for a product"""
     with get_db() as db:
-        reviews = db.execute('''
+        reviews = db.execute(
+            """
             SELECT pr.*, u.full_name as user_name, u.email as user_email
             FROM product_reviews pr
             JOIN users u ON pr.user_id = u.id
             WHERE pr.product_id = ?
             ORDER BY pr.created_at DESC
-        ''', (product_id,)).fetchall()
+        """,
+            (product_id,),
+        ).fetchall()
         return [dict(review) for review in reviews]
+
 
 def add_product_review(product_id, user_id, rating, comment):
     """Add a new product review"""
     with get_db() as db:
         try:
-            db.execute('''
+            db.execute(
+                """
                 INSERT INTO product_reviews (product_id, user_id, rating, comment)
                 VALUES (?, ?, ?, ?)
-            ''', (product_id, user_id, rating, comment))
+            """,
+                (product_id, user_id, rating, comment),
+            )
             db.commit()
             return True
         except sqlite3.Error as e:
             print(f"Error adding review: {e}")
             return False
 
+
 def search_products(search_query):
     """Search for products by name or description"""
     search_term = f"%{search_query}%"
     with get_db() as db:
-        cursor = db.execute("""
+        cursor = db.execute(
+            """
             SELECT p.*, c.name as category_name, c.slug as category_slug 
             FROM products p
             JOIN categories c ON p.category_id = c.id
             WHERE p.name LIKE ? OR p.description LIKE ?
             ORDER BY p.name
-        """, (search_term, search_term))
+        """,
+            (search_term, search_term),
+        )
         return [dict(row) for row in cursor.fetchall()]
+
 
 # User related functions
 def create_user(email, password_hash, full_name, address):
     with get_db() as db:
         try:
             # is_admin defaults to False (0)
-            db.execute("""
+            db.execute(
+                """
                 INSERT INTO users (email, password_hash, full_name, address, is_admin)
                 VALUES (?, ?, ?, ?, 0)
-            """, (email, password_hash, full_name, address))
+            """,
+                (email, password_hash, full_name, address),
+            )
             db.commit()
-            return True # Indicate success
-        except sqlite3.IntegrityError: # Handles UNIQUE constraint violation for email
-            return False # Indicate failure (e.g., email already exists)
+            return True  # Indicate success
+        except sqlite3.IntegrityError:  # Handles UNIQUE constraint violation for email
+            return False  # Indicate failure (e.g., email already exists)
+
 
 def get_user_by_id(user_id):
     with get_db() as db:
-        row = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+        row = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         return dict(row) if row else None
+
 
 def get_user_by_email(email):
     with get_db() as db:
         user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         return dict(user) if user else None
 
+
 def update_user_info(user_id, full_name, email, address):
     with get_db() as db:
-        db.execute('UPDATE users SET full_name = ?, email = ?, address = ? WHERE id = ?', (full_name, email, address, user_id))
+        db.execute(
+            "UPDATE users SET full_name = ?, email = ?, address = ? WHERE id = ?",
+            (full_name, email, address, user_id),
+        )
         db.commit()
+
 
 def update_user_password(user_id, new_password_hash):
     with get_db() as db:
-        db.execute('UPDATE users SET password_hash = ? WHERE id = ?', (new_password_hash, user_id))
+        db.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (new_password_hash, user_id),
+        )
         db.commit()
+
 
 def get_all_users():
     with get_db() as db:
-        rows = db.execute('SELECT * FROM users ORDER BY id').fetchall()
+        rows = db.execute("SELECT * FROM users ORDER BY id").fetchall()
         return [dict(row) for row in rows]
+
 
 def delete_user(user_id):
     with get_db() as db:
-        db.execute('DELETE FROM users WHERE id = ?', (user_id,))
+        db.execute("DELETE FROM users WHERE id = ?", (user_id,))
         db.commit()
